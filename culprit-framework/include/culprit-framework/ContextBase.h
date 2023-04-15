@@ -50,7 +50,9 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
 
   void Initialise();
   void Enter();
+  void PreUpdate();
   void Update(double deltaTime);
+  void PostUpdate();
   void Exit();
 
   template <class T>
@@ -530,7 +532,7 @@ template <class Context>
 std::shared_ptr<Context> ContextBase::GetChildContext() const {
   auto storedResult = m_childContexts.find(UniqueKeyGenerator::Get<Context>());
   if (storedResult == m_childContexts.end()) {
-    throw ::std::runtime_error("No child context of type " +
+    throw std::runtime_error("No child context of type " +
                                std::string(typeid(Context).name()));
   }
 
@@ -587,7 +589,7 @@ template <class Key>
 decltype(auto) ContextBase::GetFromStore() {
   auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<Key>());
   if (storedResult == m_storedObjects.end()) {
-    throw ::std::runtime_error("No stored object of type " +
+    throw std::runtime_error("No stored object of type " +
                                std::string(typeid(Key).name()));
   }
 
@@ -598,7 +600,7 @@ template <class Key>
 void ContextBase::DeleteFromStore() {
   auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<Key>());
   if (storedResult == m_storedObjects.end()) {
-    throw ::std::runtime_error("No stored object of type " +
+    throw std::runtime_error("No stored object of type " +
                                std::string(typeid(Key).name()));
   }
 
@@ -634,7 +636,7 @@ decltype(auto) ContextBase::GetUpdatable() {
   auto updatableResult =
       m_updatableObjects.find(UniqueKeyGenerator::Get<Key>());
   if (updatableResult == m_updatableObjects.end()) {
-    throw ::std::runtime_error("No stored updatable of type " +
+    throw std::runtime_error("No stored updatable of type " +
                                std::string(typeid(Key).name()));
   }
 
@@ -646,7 +648,7 @@ void ContextBase::RemoveUpdatable() {
   auto updatableResult =
       m_updatableObjects.find(UniqueKeyGenerator::Get<Key>());
   if (updatableResult == m_updatableObjects.end()) {
-    throw ::std::runtime_error("No stored updatable of type " +
+    throw std::runtime_error("No stored updatable of type " +
                                std::string(typeid(Key).name()));
   }
   m_toRemoveUpdatableObjects.insert(UniqueKeyGenerator::Get<Key>());

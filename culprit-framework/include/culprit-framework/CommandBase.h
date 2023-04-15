@@ -13,5 +13,6 @@ class CommandBase : public Notifier {
   virtual void Execute(std::shared_ptr<SignalBase> signal) = 0;
   void Release() const;
 };
+
 }  // namespace framework
 }  // namespace culprit

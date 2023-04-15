@@ -56,7 +56,7 @@ void ContextBase::Build() {
   }
 }
 
-void ContextBase::Update(double deltaTime) {
+void ContextBase::PreUpdate() {
   for (auto& storedKey : m_toRemoveStoredObjects) {
     m_storedObjects.erase(storedKey);
   }
@@ -68,10 +68,30 @@ void ContextBase::Update(double deltaTime) {
   m_toRemoveUpdatableObjects.clear();
 
   for (auto& iterator : m_updatableObjects) {
+    iterator.second->PreUpdate();
+  }
+
+  for (auto& child : m_childContexts) {
+    child.second->PreUpdate();
+  }
+}
+
+void ContextBase::Update(double deltaTime) {
+  for (auto& iterator : m_updatableObjects) {
     iterator.second->Update(deltaTime);
   }
 
   for (auto& child : m_childContexts) {
     child.second->Update(deltaTime);
+  }
+}
+
+void ContextBase::PostUpdate() {
+  for (auto& iterator : m_updatableObjects) {
+    iterator.second->PostUpdate();
+  }
+
+  for (auto& child : m_childContexts) {
+    child.second->PostUpdate();
   }
 }
