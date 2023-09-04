@@ -525,7 +525,9 @@ TEST(ContextStorage, DeleteFromStore) {
 
   context->DeleteFromStore<BaseTestModel>();
 
-  context->Update(0);
+  context->PreUpdate();
+  context->Update(0.016f);
+  context->PostUpdate();
 
   EXPECT_ANY_THROW(context->GetFromStore<BaseTestModel>());
   EXPECT_ANY_THROW(context->DeleteFromStore<BaseTestModel>());
@@ -558,14 +560,18 @@ TEST(Updating, AddRemoveExecuteUpdatableObject) {
 
   // track time model
   while (timeModel->totalTime < 10.0) {
+    context->PreUpdate();
     context->Update(0.016f);
+    context->PostUpdate();
   }
 
   // remove updatable
   removeUpdatableSignal->Dispatch();
 
-  // updatables get stored and removed after update
-  context->Update(0);
+  // updatables get stored and removed on PreUpdate
+  context->PreUpdate();
+  context->Update(0.016f);
+  context->PostUpdate();
 
   // check if actually removed
   ASSERT_ANY_THROW(context->GetUpdatable<TestUpdatable>());
