@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <cassert>
 #include <functional>
@@ -174,15 +174,25 @@ class BindFacade {
 
   template <class Value, class... Dependencies, class... Args>
   void To(Args&&... args) {
-    static_assert(std::is_base_of<Key, Value>(),
+      
+      constexpr bool validKeyValue = std::is_base_of<Key, Value>();
+      constexpr bool validValueKey = std::is_base_of<Value, Key>();
+      
+    static_assert(validKeyValue || validValueKey,
                   "Value is not derived type of Key");
+      
     _context.To<Key, Value, Dependencies...>(std::forward<Args>(args)...);
   }
 
   template <class Value, class... Dependencies, class... Args>
   void ToSingleton(Args&&... args) {
-    static_assert(std::is_base_of<Key, Value>(),
+      
+      constexpr bool validKeyValue = std::is_base_of<Key, Value>();
+      constexpr bool validValueKey = std::is_base_of<Value, Key>();
+      
+    static_assert(validKeyValue || validValueKey,
                   "Value is not derived type of Key");
+      
     _context.ToSingleton<Key, Value, Dependencies...>(
         std::forward<Args>(args)...);
   }
