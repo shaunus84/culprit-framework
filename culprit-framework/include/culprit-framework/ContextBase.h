@@ -24,6 +24,9 @@ using remove_const_t = typename std::remove_const<T>::type;
 template <typename T>
 inline void ignore_result(const T& /* unused result */) {}
 
+template<typename T, const unsigned int N = 0>
+struct store_key{};
+
 template <class Key>
 class BindFacade;
 
@@ -73,19 +76,16 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
   template <class Context>
   bool RemoveChildContext();
 
-  template <class Key>
+  template <class Key, const unsigned int N = 0>
   void Store(std::shared_ptr<Key> value);
 
-  template <class Key>
+  template <class Key, const unsigned int N = 0>
   decltype(auto) GetFromStore();
 
-  template <class Key>
+  template <class Key, const unsigned int N = 0>
   bool HasStored();
 
-  template <class Key>
-  bool HasUpdatable();
-
-  template <class Key>
+  template <class Key, const unsigned int N = 0>
   void DeleteFromStore();
 
   template <class Key>
@@ -93,6 +93,9 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
 
   template <class Key>
   decltype(auto) GetUpdatable();
+    
+  template <class Key>
+  bool HasUpdatable();
 
   template <class Key>
   void RemoveUpdatable();
@@ -573,7 +576,7 @@ bool ContextBase::RemoveChildContext() {
   return true;
 }
 
-template <class Key>
+template <class Key, const unsigned int N>
 void ContextBase::Store(std::shared_ptr<Key> value) {
   static_assert(!std::is_base_of<CommandBase, Key>(),
                 "Cannot store Command type");
@@ -582,7 +585,7 @@ void ContextBase::Store(std::shared_ptr<Key> value) {
   static_assert(!std::is_base_of<ContextBase, Key>(),
                 "Cannot store Context type");
   const bool value_is_singleton_type =
-      m_instanceMap.count(UniqueKeyGenerator::Get<Key>()) > 0;
+      m_instanceMap.count(UniqueKeyGenerator::Get<store_key<Key, N>>()) > 0;
   const bool value_matches_bound_singleton =
       value_is_singleton_type && value.get() == Resolve<Key>().get();
   const bool store_is_valid =
@@ -592,12 +595,12 @@ void ContextBase::Store(std::shared_ptr<Key> value) {
           store_is_valid));
 
   m_storedObjects.insert(
-      std::make_pair(UniqueKeyGenerator::Get<Key>(), std::move(value)));
+      std::make_pair(UniqueKeyGenerator::Get<store_key<Key, N>>(), std::move(value)));
 }
 
-template <class Key>
+template <class Key, const unsigned int N>
 decltype(auto) ContextBase::GetFromStore() {
-  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<Key>());
+  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<store_key<Key, N>>());
   if (storedResult == m_storedObjects.end()) {
     throw std::runtime_error("No stored object of type " +
                                std::string(typeid(Key).name()));
@@ -606,20 +609,20 @@ decltype(auto) ContextBase::GetFromStore() {
   return std::static_pointer_cast<Key>(storedResult->second);
 }
 
-template <class Key>
+template <class Key, const unsigned int N>
 void ContextBase::DeleteFromStore() {
-  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<Key>());
+  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<store_key<Key, N>>());
   if (storedResult == m_storedObjects.end()) {
     throw std::runtime_error("No stored object of type " +
                                std::string(typeid(Key).name()));
   }
 
-  m_toRemoveStoredObjects.insert(UniqueKeyGenerator::Get<Key>());
+  m_toRemoveStoredObjects.insert(UniqueKeyGenerator::Get<store_key<Key, N>>());
 }
 
-template <class Key>
+template <class Key, const unsigned int N>
 bool ContextBase::HasStored() {
-  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<Key>());
+  auto storedResult = m_storedObjects.find(UniqueKeyGenerator::Get<store_key<Key, N>>());
   return storedResult != m_storedObjects.end();
 }
 
