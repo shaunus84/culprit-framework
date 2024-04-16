@@ -43,6 +43,11 @@ void ContextBase::Exit() {
   }
   m_toRemoveStoredObjects.clear();
 
+  for (auto& sharedStoredKey : m_toRemoveSharedStoredObjects) {
+    m_sharedStoredObjects.erase(sharedStoredKey);
+  }
+  m_toRemoveSharedStoredObjects.clear();
+
   for (auto& updatableKey : m_toRemoveUpdatableObjects) {
     m_updatableObjects.erase(updatableKey);
   }
@@ -51,7 +56,7 @@ void ContextBase::Exit() {
 
 void ContextBase::Build() {
   for (const auto& keys : asSingletonKeys) {
-    const auto creatorFunction = (*m_resolverMap.at(keys));
+    const auto& creatorFunction = (*m_resolverMap.at(keys));
     (void)creatorFunction();
   }
 }
