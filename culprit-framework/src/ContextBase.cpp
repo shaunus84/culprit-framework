@@ -9,6 +9,9 @@ void ContextBase::Initialise() {
   // before building.
   RemoveBind<EnterContextSignal>();
   RemoveBind<ExitContextSignal>();
+  RemoveBind<PreUpdateContextSignal>();
+  RemoveBind<UpdateContextSignal>();
+  RemoveBind<PostUpdateContextSignal>();
   RemoveBind<ContextBase>();
 
   SetBindings();
@@ -20,6 +23,18 @@ void ContextBase::Initialise() {
 
   if (!HasBinding<ExitContextSignal>()) {
     BindSignal<ExitContextSignal>();
+  }
+
+  if (!HasBinding<PreUpdateContextSignal>()) {
+    BindSignal<PreUpdateContextSignal>();
+  }
+
+  if (!HasBinding<UpdateContextSignal>()) {
+    BindSignal<UpdateContextSignal>();
+  }
+
+  if (!HasBinding<PostUpdateContextSignal>()) {
+    BindSignal<PostUpdateContextSignal>();
   }
 
   Build();
@@ -72,6 +87,8 @@ void ContextBase::PreUpdate() {
   }
   m_toRemoveUpdatableObjects.clear();
 
+  Resolve<PreUpdateContextSignal>()->Dispatch();
+
   for (auto& iterator : m_updatableObjects) {
     iterator.second->PreUpdate();
   }
@@ -82,6 +99,8 @@ void ContextBase::PreUpdate() {
 }
 
 void ContextBase::Update(double deltaTime) {
+  Resolve<UpdateContextSignal>()->Dispatch();
+
   for (auto& iterator : m_updatableObjects) {
     iterator.second->Update(deltaTime);
   }
@@ -92,6 +111,8 @@ void ContextBase::Update(double deltaTime) {
 }
 
 void ContextBase::PostUpdate() {
+  Resolve<PostUpdateContextSignal>()->Dispatch();
+
   for (auto& iterator : m_updatableObjects) {
     iterator.second->PostUpdate();
   }
