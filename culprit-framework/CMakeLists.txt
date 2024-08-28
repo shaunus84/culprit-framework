@@ -1,5 +1,5 @@
 
-add_library(culprit-framework STATIC
+add_library(culprit-framework SHARED
 
 			include/culprit-framework/CommandBase.h
 			include/culprit-framework/ContextBase.h
