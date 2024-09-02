@@ -10,12 +10,10 @@ add_library(culprit-framework STATIC
 			include/culprit-framework/Signal.hpp
 			include/culprit-framework/SignalResponder.h
 			include/culprit-framework/Signals.h
-			include/culprit-framework/UniqueKeyGenerator.h
 
 			src/CommandBase.cpp
 			src/ContextBase.cpp
-			src/SignalResponder.cpp
-			src/UniqueKeyGenerator.cpp)
+			src/SignalResponder.cpp)
 			
 target_include_directories(culprit-framework
 	PUBLIC
@@ -24,6 +22,8 @@ target_include_directories(culprit-framework
 	PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+target_link_libraries(culprit-framework PRIVATE unique-key-generator)
 
 target_compile_features(culprit-framework PRIVATE cxx_std_17)
 
