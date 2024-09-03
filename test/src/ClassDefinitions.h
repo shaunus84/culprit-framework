@@ -110,7 +110,7 @@ class UnboundModel2 : public BaseTestModel {
 
 class TimeModel {
  public:
-  float totalTime;
+  double totalTime;
 
   TimeModel() { totalTime = 0.0f; }
 };

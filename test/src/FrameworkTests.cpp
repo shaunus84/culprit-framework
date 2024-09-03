@@ -241,8 +241,8 @@ TEST(SignalAttachDetach, CanDetachFreeFunctions) {
   context->Enter();
 
   auto signal = context->Resolve<SignalForAttach>();
-  const int attachToken1 = signal->Attach(&CanDetachFreeFunctions_Func1);
-  const int attachToken2 = signal->Attach(&CanDetachFreeFunctions_Func2);
+  const auto attachToken1 = signal->Attach(&CanDetachFreeFunctions_Func1);
+  const auto attachToken2 = signal->Attach(&CanDetachFreeFunctions_Func2);
 
   ASSERT_EQ(0, can_detach_free_functions_func1_call_count);
   ASSERT_EQ(0, can_detach_free_functions_func2_call_count);
@@ -304,7 +304,7 @@ TEST(SignalAttachDetach, CanDetachMemberFunction) {
                                       &AttachToSignalClass::function1);
   signal->Attach<AttachToSignalClass>(&classToNotify,
                                       &AttachToSignalClass::function2);
-  const int attachToken = signal->Attach<AttachToSignalClass>(
+  const auto attachToken = signal->Attach<AttachToSignalClass>(
       &classToNotify, &AttachToSignalClass::function3);
 
   ASSERT_EQ("0", classToNotify.functionHistory);
@@ -349,7 +349,7 @@ TEST(SignalAttachDetach, DifferentInstancesOfSameClass) {
                                       &AttachToSignalClass::function1);
   signal->Attach<AttachToSignalClass>(&classToNotify,
                                       &AttachToSignalClass::function2);
-  const int attachToken = signal->Attach<AttachToSignalClass>(
+  const auto attachToken = signal->Attach<AttachToSignalClass>(
       &classToNotify, &AttachToSignalClass::function3);
   signal->Attach<AttachToSignalClass>(&anotherClassToNotify,
                                       &AttachToSignalClass::function1);

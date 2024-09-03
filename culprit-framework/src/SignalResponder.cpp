@@ -34,6 +34,7 @@ void SignalResponder::ExecuteCommand() {
   }
 }
 
-void SignalResponder::AddCommand(int commandID) {
+void SignalResponder::AddCommand(
+    std::size_t commandID) {
   m_commands.push_back(commandID);
 }
