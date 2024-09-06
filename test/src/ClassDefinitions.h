@@ -120,7 +120,10 @@ class TestUpdatable : public IUpdatable {
   TestUpdatable(std::shared_ptr<TimeModel> timeModel)
       : m_pTimeModel{timeModel} {}
 
+  void HandleEvents(const void* pEvent) {}
+  void PreUpdate() {}
   void Update(double deltaTime) { m_pTimeModel->totalTime += deltaTime; }
+  void PostUpdate() {}
 
  private:
   std::shared_ptr<TimeModel> m_pTimeModel;

@@ -5,9 +5,10 @@ namespace framework {
 class IUpdatable {
  public:
   virtual ~IUpdatable() {}
-  virtual void PreUpdate(){};
-  virtual void Update(double deltaTime) = 0;
-  virtual void PostUpdate(){};
+  virtual void HandleEvents(const void* pEvent) {}
+  virtual void PreUpdate() {}
+  virtual void Update(double deltaTime) {}
+  virtual void PostUpdate() {}
 };
 }  // namespace framework
 }  // namespace culprit

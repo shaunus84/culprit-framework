@@ -76,6 +76,16 @@ void ContextBase::Build() {
   }
 }
 
+void ContextBase::HandleEvents(const void* pEvent) {
+  for (auto& iterator : m_updatableObjects) {
+    iterator.second->HandleEvents(pEvent);
+  }
+
+  for (auto& child : m_childContexts) {
+    child.second->HandleEvents(pEvent);
+  }
+}
+
 void ContextBase::PreUpdate() {
   for (auto& storedKey : m_toRemoveStoredObjects) {
     m_storedObjects.erase(storedKey);

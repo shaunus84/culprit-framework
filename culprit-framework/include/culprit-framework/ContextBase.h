@@ -55,6 +55,7 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
 
   void Initialise();
   void Enter();
+  void HandleEvents(const void* pEvent);
   void PreUpdate();
   void Update(double deltaTime);
   void PostUpdate();
