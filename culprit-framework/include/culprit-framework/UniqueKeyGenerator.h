@@ -1,5 +1,7 @@
 #pragma once
 
+#include <typeinfo>
+
 namespace culprit {
 namespace framework {
 
