@@ -77,8 +77,8 @@ void ContextBase::Build() {
 }
 
 void ContextBase::HandleEvents(const void* pEvent) {
-  for (auto& iterator : m_updatableObjects) {
-    iterator.second->HandleEvents(pEvent);
+  for (auto& iterator : m_updatableObjectsList) {
+    iterator->HandleEvents(pEvent);
   }
 
   for (auto& child : m_childContexts) {
@@ -93,14 +93,17 @@ void ContextBase::PreUpdate() {
   m_toRemoveStoredObjects.clear();
 
   for (auto& updatableKey : m_toRemoveUpdatableObjects) {
+    auto updatableIndex = m_updatableObjects.at(updatableKey).first;
+    m_updatableObjectsList.erase(m_updatableObjectsList.begin() +
+                                 updatableIndex);
     m_updatableObjects.erase(updatableKey);
   }
   m_toRemoveUpdatableObjects.clear();
 
   Resolve<PreUpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjects) {
-    iterator.second->PreUpdate();
+  for (auto& iterator : m_updatableObjectsList) {
+    iterator->PreUpdate();
   }
 
   for (auto& child : m_childContexts) {
@@ -111,8 +114,8 @@ void ContextBase::PreUpdate() {
 void ContextBase::Update(double deltaTime) {
   Resolve<UpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjects) {
-    iterator.second->Update(deltaTime);
+  for (auto& iterator : m_updatableObjectsList) {
+    iterator->Update(deltaTime);
   }
 
   for (auto& child : m_childContexts) {
@@ -123,8 +126,8 @@ void ContextBase::Update(double deltaTime) {
 void ContextBase::PostUpdate() {
   Resolve<PostUpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjects) {
-    iterator.second->PostUpdate();
+  for (auto& iterator : m_updatableObjectsList) {
+    iterator->PostUpdate();
   }
 
   for (auto& child : m_childContexts) {

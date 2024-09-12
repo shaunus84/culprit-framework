@@ -35,6 +35,9 @@ class OnSignalFacade;
 
 using type_identifier = std::size_t;
 
+template<typename T>
+using indexed_ptr = std::pair<size_t, std::shared_ptr<T>>;
+
 class ContextBase : public std::enable_shared_from_this<ContextBase> {
   using CreatorFunction = std::function<std::shared_ptr<void>()>;
   using InstanceMap = std::unordered_map<type_identifier, std::shared_ptr<void>>;
@@ -43,7 +46,8 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
       std::unordered_map<type_identifier, std::shared_ptr<CreatorFunction>>;
   using CommandMap = std::unordered_map<type_identifier, std::shared_ptr<SignalResponder>>;
   using StoredObjects = std::unordered_map<type_identifier, std::shared_ptr<void>>;
-  using UpdatableObjects = std::unordered_map<type_identifier, std::shared_ptr<IUpdatable>>;
+  using UpdatableObjects = std::unordered_map<type_identifier, indexed_ptr<IUpdatable>>;
+  using UpdatableObjectsList = std::vector<std::shared_ptr<IUpdatable>>;
 
   template <typename>
   friend class BindFacade;
@@ -177,6 +181,7 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
   ResolverMap m_resolverMap;
   InstanceMap m_instanceMap;
   UpdatableObjects m_updatableObjects;
+  UpdatableObjectsList m_updatableObjectsList;
   std::unordered_set<type_identifier> m_toRemoveUpdatableObjects;
   CommandMap m_commandMap;
   StoredObjects m_storedObjects;
@@ -717,7 +722,9 @@ void ContextBase::AddUpdatable(std::shared_ptr<Key> value) {
           m_updatableObjects.count(UniqueKeyGenerator::Get<Key>()) == 0));
 
   m_updatableObjects.insert(
-      std::make_pair(UniqueKeyGenerator::Get<Key>(), std::move(value)));
+      std::make_pair(UniqueKeyGenerator::Get<Key>(), std::make_pair(m_updatableObjectsList.size(), value)));
+
+  m_updatableObjectsList.push_back(value);
 }
 
 template <class Key>
@@ -729,7 +736,7 @@ decltype(auto) ContextBase::GetUpdatable() {
                              std::string(typeid(Key).name()));
   }
 
-  return std::static_pointer_cast<Key>(updatableResult->second);
+  return std::static_pointer_cast<Key>(updatableResult->second.second);
 }
 
 template <class Key>
