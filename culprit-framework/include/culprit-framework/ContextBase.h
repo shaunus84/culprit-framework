@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 
 #include "CommandBase.h"
 #include "Creator.hpp"
@@ -182,12 +182,12 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
   InstanceMap m_instanceMap;
   UpdatableObjects m_updatableObjects;
   UpdatableObjectsList m_updatableObjectsList;
-  std::unordered_set<type_identifier> m_toRemoveUpdatableObjects;
+  std::vector<type_identifier> m_toRemoveUpdatableObjects;
   CommandMap m_commandMap;
   StoredObjects m_storedObjects;
   StoredObjects m_sharedStoredObjects;
-  std::unordered_set<type_identifier> m_toRemoveStoredObjects;
-  std::unordered_set<type_identifier> m_toRemoveSharedStoredObjects;
+  std::vector<type_identifier> m_toRemoveStoredObjects;
+  std::vector<type_identifier> m_toRemoveSharedStoredObjects;
   CommandResolverMap m_commandResolverMap;
 
   std::unordered_map<type_identifier, std::vector<type_identifier>>
@@ -678,7 +678,7 @@ void ContextBase::DeleteFromStore() {
                              std::string(typeid(Key).name()));
   }
 
-  m_toRemoveStoredObjects.insert(UniqueKeyGenerator::Get<store_key<Key, N>>());
+  m_toRemoveStoredObjects.push_back(UniqueKeyGenerator::Get<store_key<Key, N>>());
 }
 
 template <class Key, const type_identifier N>
@@ -747,7 +747,7 @@ void ContextBase::RemoveUpdatable() {
     throw std::runtime_error("No stored updatable of type " +
                              std::string(typeid(Key).name()));
   }
-  m_toRemoveUpdatableObjects.insert(UniqueKeyGenerator::Get<Key>());
+  m_toRemoveUpdatableObjects.push_back(UniqueKeyGenerator::Get<Key>());
 }
 // ----- End ContextBase ----- //
 
