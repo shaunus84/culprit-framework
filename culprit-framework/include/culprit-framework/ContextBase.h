@@ -752,11 +752,11 @@ void ContextBase::AddUpdatable(std::shared_ptr<Key> value) {
   assert((ignore_result("Attempting to bind already bound key."),
           m_updatableObjects.count(UniqueKeyGenerator::Get<Key>()) == 0));
 
-  m_preUpdateList.push_back([value]() { value->PreUpdate(); });
-  m_updateList.push_back([value](double delta) { value->Update(delta); });
+  m_preUpdateList.push_back([value]() { value->doPreUpdate(); });
+  m_updateList.push_back([value](double delta) { value->doUpdate(delta); });
   m_eventHandlingList.push_back(
-      [value](const void* pEvent) { value->HandleEvents(pEvent); });
-  m_postUpdateList.push_back([value] { value->PostUpdate(); });
+      [value](const void* pEvent) { value->doHandleEvents(pEvent); });
+  m_postUpdateList.push_back([value] { value->doPostUpdate(); });
 
   m_updatableObjects.insert(
       std::make_pair(UniqueKeyGenerator::Get<Key>(), std::make_pair(m_updateList.size() - 1, std::make_shared<UpdatableWrapper>(value))));
