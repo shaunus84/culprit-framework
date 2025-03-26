@@ -4,6 +4,18 @@
 
 using culprit::framework::ContextBase;
 
+namespace {
+auto swapAndPop = [](auto& vec, size_t index) -> void {
+  size_t lastIndex = vec.size() - 1;
+  if (index != lastIndex) {
+    std::swap(vec[index], vec[lastIndex]);
+    vec.pop_back();
+    return;  // A swap occurred, so the element at 'index' is new.
+  }
+  vec.pop_back();  // No swap; we simply removed the last element.
+};
+}  // namespace
+
 void ContextBase::Initialise() {
   // Ensure a parents enter and exit signals are not in the accumulated map
   // before building.
@@ -77,8 +89,8 @@ void ContextBase::Build() {
 }
 
 void ContextBase::HandleEvents(const void* pEvent) {
-  for (auto& iterator : m_updatableObjectsList) {
-    iterator->HandleEvents(pEvent);
+  for (auto& iterator : m_eventHandlingList) {
+    iterator(pEvent);
   }
 
   for (auto& child : m_childContexts) {
@@ -93,17 +105,35 @@ void ContextBase::PreUpdate() {
   m_toRemoveStoredObjects.clear();
 
   for (auto& updatableKey : m_toRemoveUpdatableObjects) {
+    // get the element that is currently set to this updatable
     auto updatableIndex = m_updatableObjects.at(updatableKey).first;
-    m_updatableObjectsList.erase(m_updatableObjectsList.begin() +
-                                 updatableIndex);
+
+    // get the element we are going to swap it with, whichever element is set
+    // to, the last element in the vector.
+    auto lastElement = std::find_if(
+        m_updatableObjects.begin(), m_updatableObjects.end(), [&](auto& pair) {
+          return pair.second.first == m_preUpdateList.size() - 1;
+        });
+
+    // if we found it the we can swap everything and then remove from update
+    // list
+    if (lastElement != m_updatableObjects.end()) {
+      lastElement->second.first = updatableIndex;
+
+      swapAndPop(m_preUpdateList, updatableIndex);
+      swapAndPop(m_updateList, updatableIndex);
+      swapAndPop(m_eventHandlingList, updatableIndex);
+      swapAndPop(m_postUpdateList, updatableIndex);
+    }
+
     m_updatableObjects.erase(updatableKey);
   }
   m_toRemoveUpdatableObjects.clear();
 
   Resolve<PreUpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjectsList) {
-    iterator->PreUpdate();
+  for (auto& iterator : m_preUpdateList) {
+    iterator();
   }
 
   for (auto& child : m_childContexts) {
@@ -114,8 +144,8 @@ void ContextBase::PreUpdate() {
 void ContextBase::Update(double deltaTime) {
   Resolve<UpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjectsList) {
-    iterator->Update(deltaTime);
+  for (auto& iterator : m_updateList) {
+    iterator(deltaTime);
   }
 
   for (auto& child : m_childContexts) {
@@ -126,8 +156,8 @@ void ContextBase::Update(double deltaTime) {
 void ContextBase::PostUpdate() {
   Resolve<PostUpdateContextSignal>()->Dispatch();
 
-  for (auto& iterator : m_updatableObjectsList) {
-    iterator->PostUpdate();
+  for (auto& iterator : m_postUpdateList) {
+    iterator();
   }
 
   for (auto& child : m_childContexts) {

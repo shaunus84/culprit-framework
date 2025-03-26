@@ -555,6 +555,13 @@ TEST(Updating, AddRemoveExecuteUpdatableObject) {
   // grab the updatable that was added in the command
   auto testUpdatable = context->GetUpdatable<TestUpdatable>();
 
+  // add another updatable
+  auto testUpdatable2 = context->Resolve<AnotherTestUpdatable>();
+  context->AddUpdatable<AnotherTestUpdatable>(testUpdatable2);
+
+  auto orderTest = context->GetUpdatableOrder<TestUpdatable>();
+  auto orderTest2 = context->GetUpdatableOrder<AnotherTestUpdatable>();
+
   // grab a signal to launch another command to remove updatable
   auto removeUpdatableSignal = context->Resolve<RemoveTestUpdatableSignal>();
 
@@ -572,6 +579,10 @@ TEST(Updating, AddRemoveExecuteUpdatableObject) {
   context->PreUpdate();
   context->Update(0.016f);
   context->PostUpdate();
+
+  orderTest2 = context->GetUpdatableOrder<AnotherTestUpdatable>();
+
+  ASSERT_EQ(orderTest2,orderTest);
 
   // check if actually removed
   ASSERT_ANY_THROW(context->GetUpdatable<TestUpdatable>());

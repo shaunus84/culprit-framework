@@ -4,9 +4,9 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
-#include <set>
 
 #include "CommandBase.h"
 #include "Creator.hpp"
@@ -17,6 +17,20 @@
 
 namespace culprit {
 namespace framework {
+
+class UpdatableWrapper {
+ public:
+  template <typename T>
+  UpdatableWrapper(std::shared_ptr<T> pObj) : m_updateable{pObj} {}
+
+  template <typename T>
+  std::shared_ptr<T> Get() {
+    return std::static_pointer_cast<T>(m_updateable);
+  }
+
+ private:
+  std::shared_ptr<void> m_updateable{nullptr};
+};
 
 template <typename T>
 using remove_const_t = typename std::remove_const<T>::type;
@@ -35,19 +49,23 @@ class OnSignalFacade;
 
 using type_identifier = std::size_t;
 
-template<typename T>
+template <typename T>
 using indexed_ptr = std::pair<size_t, std::shared_ptr<T>>;
 
 class ContextBase : public std::enable_shared_from_this<ContextBase> {
   using CreatorFunction = std::function<std::shared_ptr<void>()>;
-  using InstanceMap = std::unordered_map<type_identifier, std::shared_ptr<void>>;
-  using ResolverMap = std::unordered_map<type_identifier, std::shared_ptr<CreatorFunction>>;
+  using InstanceMap =
+      std::unordered_map<type_identifier, std::shared_ptr<void>>;
+  using ResolverMap =
+      std::unordered_map<type_identifier, std::shared_ptr<CreatorFunction>>;
   using CommandResolverMap =
       std::unordered_map<type_identifier, std::shared_ptr<CreatorFunction>>;
-  using CommandMap = std::unordered_map<type_identifier, std::shared_ptr<SignalResponder>>;
-  using StoredObjects = std::unordered_map<type_identifier, std::shared_ptr<void>>;
-  using UpdatableObjects = std::unordered_map<type_identifier, indexed_ptr<IUpdatable>>;
-  using UpdatableObjectsList = std::vector<std::shared_ptr<IUpdatable>>;
+  using CommandMap =
+      std::unordered_map<type_identifier, std::shared_ptr<SignalResponder>>;
+  using StoredObjects =
+      std::unordered_map<type_identifier, std::shared_ptr<void>>;
+  using UpdatableObjects =
+      std::unordered_map<type_identifier, indexed_ptr<UpdatableWrapper>>;
 
   template <typename>
   friend class BindFacade;
@@ -112,6 +130,12 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
 
   template <class Key>
   decltype(auto) GetUpdatable();
+
+  template<class Key>
+  size_t GetUpdatableOrder()
+  {
+    return m_updatableObjects.at(UniqueKeyGenerator::Get<Key>()).first;
+  }
 
   template <class Key>
   bool HasUpdatable();
@@ -181,7 +205,12 @@ class ContextBase : public std::enable_shared_from_this<ContextBase> {
   ResolverMap m_resolverMap;
   InstanceMap m_instanceMap;
   UpdatableObjects m_updatableObjects;
-  UpdatableObjectsList m_updatableObjectsList;
+
+  std::vector<std::function<void()>> m_preUpdateList;
+  std::vector<std::function<void()>> m_postUpdateList;
+  std::vector<std::function<void(const void*)>> m_eventHandlingList;
+  std::vector<std::function<void(double)>> m_updateList;
+
   std::vector<type_identifier> m_toRemoveUpdatableObjects;
   CommandMap m_commandMap;
   StoredObjects m_storedObjects;
@@ -678,7 +707,8 @@ void ContextBase::DeleteFromStore() {
                              std::string(typeid(Key).name()));
   }
 
-  m_toRemoveStoredObjects.push_back(UniqueKeyGenerator::Get<store_key<Key, N>>());
+  m_toRemoveStoredObjects.push_back(
+      UniqueKeyGenerator::Get<store_key<Key, N>>());
 }
 
 template <class Key, const type_identifier N>
@@ -690,7 +720,8 @@ void ContextBase::DeleteFromSharedStore() {
                              std::string(typeid(Key).name()));
   }
 
-  m_toRemoveSharedStoredObjects.insert(UniqueKeyGenerator::Get<store_key<Key, N>>());
+  m_toRemoveSharedStoredObjects.insert(
+      UniqueKeyGenerator::Get<store_key<Key, N>>());
 }
 
 template <class Key, const type_identifier N>
@@ -716,15 +747,19 @@ bool ContextBase::HasUpdatable() {
 
 template <class Key>
 void ContextBase::AddUpdatable(std::shared_ptr<Key> value) {
-  static_assert(std::is_base_of<IUpdatable, Key>(),
+  static_assert(std::is_base_of<IUpdatable<Key>, Key>(),
                 "Attempting to use 'AddUpdatable' with non-Updatable type.");
   assert((ignore_result("Attempting to bind already bound key."),
           m_updatableObjects.count(UniqueKeyGenerator::Get<Key>()) == 0));
 
-  m_updatableObjects.insert(
-      std::make_pair(UniqueKeyGenerator::Get<Key>(), std::make_pair(m_updatableObjectsList.size(), value)));
+  m_preUpdateList.push_back([value]() { value->PreUpdate(); });
+  m_updateList.push_back([value](double delta) { value->Update(delta); });
+  m_eventHandlingList.push_back(
+      [value](const void* pEvent) { value->HandleEvents(pEvent); });
+  m_postUpdateList.push_back([value] { value->PostUpdate(); });
 
-  m_updatableObjectsList.push_back(value);
+  m_updatableObjects.insert(
+      std::make_pair(UniqueKeyGenerator::Get<Key>(), std::make_pair(m_updateList.size() - 1, std::make_shared<UpdatableWrapper>(value))));
 }
 
 template <class Key>
@@ -736,7 +771,7 @@ decltype(auto) ContextBase::GetUpdatable() {
                              std::string(typeid(Key).name()));
   }
 
-  return std::static_pointer_cast<Key>(updatableResult->second.second);
+  return updatableResult->second.second->Get<Key>();
 }
 
 template <class Key>

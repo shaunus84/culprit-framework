@@ -94,6 +94,7 @@ class BasicUpdatableContext : public ContextBase {
   void SetBindings() override {
     Bind<TimeModel>().ToSingleton<TimeModel>();
     Bind<TestUpdatable>().To<TestUpdatable, TimeModel>();
+    Bind<AnotherTestUpdatable>().To<AnotherTestUpdatable, TimeModel>();
 
     On<RemoveTestUpdatableSignal>()
         .Do<RemoveTestUpdatableCommand, ContextBase>();

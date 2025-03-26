@@ -2,6 +2,8 @@
 
 using namespace culprit::framework;
 
+#include <culprit-framework/IUpdatable.h>
+
 ///
 /// Resolve Dependencies
 ///
@@ -115,9 +117,23 @@ class TimeModel {
   TimeModel() { totalTime = 0.0f; }
 };
 
-class TestUpdatable : public IUpdatable {
+class TestUpdatable : public IUpdatable<TestUpdatable> {
  public:
   TestUpdatable(std::shared_ptr<TimeModel> timeModel)
+      : m_pTimeModel{timeModel} {}
+
+  void HandleEvents(const void* pEvent) {}
+  void PreUpdate() {}
+  void Update(double deltaTime) { m_pTimeModel->totalTime += deltaTime; }
+  void PostUpdate() {}
+
+ private:
+  std::shared_ptr<TimeModel> m_pTimeModel;
+};
+
+class AnotherTestUpdatable : public IUpdatable<AnotherTestUpdatable> {
+ public:
+  AnotherTestUpdatable(std::shared_ptr<TimeModel> timeModel)
       : m_pTimeModel{timeModel} {}
 
   void HandleEvents(const void* pEvent) {}
