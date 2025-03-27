@@ -44,4 +44,20 @@ target_compile_features(culprit-framework PRIVATE cxx_std_17)
 	# Run macro
 	GroupSources(culprit-framework)
 
-install(TARGETS culprit-framework)
+# Install target + headers
+install(TARGETS culprit-framework
+    EXPORT CulpritFrameworkTargets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(DIRECTORY include/ DESTINATION include)
+
+# Export the target (NO config file needed if you're not using find_package)
+install(EXPORT CulpritFrameworkTargets
+    FILE CulpritFrameworkTargets.cmake
+    NAMESPACE culprit::
+    DESTINATION lib/cmake/culprit-framework
+)
