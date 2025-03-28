@@ -61,3 +61,24 @@ install(EXPORT CulpritFrameworkTargets
     NAMESPACE culprit::
     DESTINATION lib/cmake/culprit-framework
 )
+
+# === CMake Package Config ===
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/CulpritFrameworkConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CulpritFrameworkConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/CulpritFrameworkConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/culprit-framework
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/CulpritFrameworkConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/CulpritFrameworkConfigVersion.cmake"
+    DESTINATION lib/cmake/culprit-framework
+)
